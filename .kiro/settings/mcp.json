@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "awslabs.cloudwatch-applicationsignals-mcp-server": {
+      "command": "uvx",
+      "args": ["awslabs.cloudwatch-applicationsignals-mcp-server@latest"],
+      "env": {
+        "FASTMCP_LOG_LEVEL": "ERROR",
+        "AWS_REGION": "us-east-1"
+      },
+      "disabled": false,
+      "autoApprove": [
+        "list_monitored_services",
+        "list_canaries",
+        "query_sampled_traces",
+        "search_transaction_spans",
+        "audit_services",
+        "analyze_canary_failures"
+      ]
+    }
+  }
+}

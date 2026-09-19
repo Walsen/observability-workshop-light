@@ -147,6 +147,56 @@ rm -rf .venv                                          # the virtualenv
   view runs, screenshots, and success rate in CloudWatch → Application Signals →
   Synthetics Canaries. Artifacts land in the canary S3 bucket (expired after 7 days).
 
+## Kiro skill: show traces
+
+This repo ships a Kiro skill at `.kiro/skills/show-traces/` that pulls recent
+X-Ray / Application Signals traces for the deployed stack and summarizes them —
+number of requests, latency (p50/p90/max), any faults or errors, and the
+downstream call breakdown (Lambda → DynamoDB → SNS). If you ask about the canary,
+it also reports `process-endpoint` pass/fail.
+
+### Requirements
+
+Both skills use the AWS Application Signals MCP server, which is **already
+included in this repo** at `.kiro/settings/mcp.json`. It's run via `uvx`, so no
+manual install is needed — Kiro launches it on demand. The one server covers
+**both X-Ray traces and Synthetics canaries**.
+
+It resolves AWS credentials from your environment's `AWS_PROFILE` (this repo's
+`.envrc` exports it via direnv from `.env.local`), and defaults to region
+`us-east-1`. Set `AWS_PROFILE` to your own profile if you're not using the
+repo's direnv setup.
+
+The stack must be deployed and have received some traffic (the canary probes
+`/process` every 5 minutes, so there's usually a steady trickle).
+
+### How to trigger it
+
+There's no command — the skill activates automatically when you ask Kiro
+something that matches. Ask naturally, e.g.:
+
+- "Show me the tracing data for recent requests"
+- "What do the traces look like for the last hour?"
+- "Any faults or slow requests on the Lambda?"
+- "Show the request path / downstream calls for /process"
+
+## Kiro skill: check canary
+
+This repo also ships a skill at `.kiro/skills/check-canary/` that reports the
+health of the `process-endpoint` Synthetics canary (the one probing `/process`
+every 5 minutes) and diagnoses failures — current state, last run, pass/fail
+history, and root cause. When the canary is failing, it cross-checks the backing
+Lambda to tie the failure to the underlying fault.
+
+It uses the same bundled Application Signals MCP server as the traces skill
+(see requirements above), and activates automatically on canary/synthetics
+questions, e.g.:
+
+- "Is the canary passing?"
+- "Check the synthetics monitor for the endpoint"
+- "Why is the endpoint probe failing?"
+- "Is the site up?"
+
 ## Notes / gotchas
 
 - **`AWSTemplateFormatVersion`** must be spelled exactly — a typo passes `sam build`
