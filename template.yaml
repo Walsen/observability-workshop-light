@@ -1,4 +1,4 @@
-WSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
   E-commerce purchase demo: DynamoDB (CustomerPurchase) + SNS topic + a Lambda
@@ -115,7 +115,7 @@ Resources:
     Type: AWS::Synthetics::Canary
     Properties:
       Name: process-endpoint
-      RuntimeVersion: syn-python-selenium-4.1
+      RuntimeVersion: syn-python-selenium-12.0
       ArtifactS3Location: !Sub "s3://${CanaryArtifactBucket}"
       ExecutionRoleArn: !GetAtt CanaryRole.Arn
       StartCanaryAfterCreation: true
@@ -124,7 +124,7 @@ Resources:
         DurationInSeconds: '0'          # run indefinitely on the schedule
       RunConfig:
         TimeoutInSeconds: 60
-        ActiveTracing: true             # feeds the X-Ray service map
+        ActiveTracing: false             # feeds the X-Ray service map
       Code:
         Handler: canary.handler
         Script: !Sub |

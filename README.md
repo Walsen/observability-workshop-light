@@ -7,8 +7,9 @@ Project layout:
 ```txt
 ecommerce-app/
 ├── template.yaml # the SAM template
-├── lambda_function.py # your handler
-└── requirements.txt # the X-Ray SDK dependency
+└──src
+  ├── lambda_function.py # your handler
+  └── requirements.txt # the X-Ray SDK dependency
 ```
 
 lambda_function.py:
