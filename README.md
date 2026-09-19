@@ -4,6 +4,26 @@ A tiny e-commerce demo that wires up **DynamoDB → Lambda → SNS** behind an H
 with **X-Ray tracing** on the function and a **CloudWatch Synthetics canary** probing
 the endpoint every 5 minutes. Deployed with AWS SAM.
 
+## Architecture
+
+```mermaid
+flowchart LR
+    client([Client]) --> apigw[API Gateway<br/>HTTP API]
+    apigw --> lambda[Lambda<br/>ProcessPurchasesFn]
+    lambda -->|query / read| ddb[(DynamoDB<br/>CustomerPurchase)]
+    lambda -->|publish high-value| sns[SNS Topic]
+
+    subgraph obs [Observability]
+        xray[X-Ray tracing]
+        canary[Synthetics canary<br/>process-endpoint]
+        s3[(S3<br/>canary artifacts)]
+    end
+
+    lambda -.->|traces| xray
+    canary -.->|probe every 5 min| apigw
+    canary -.->|screenshots / HAR / logs| s3
+```
+
 ## Project layout
 
 ```txt
