@@ -95,10 +95,28 @@ aws lambda invoke --function-name <FunctionName-from-outputs> out.json
 ### 6. Tear down
 
 The canary runs every 5 minutes indefinitely and the stack keeps DynamoDB, SNS,
-and an S3 bucket around — delete the stack when you're done to stop the cost:
+and an S3 bucket around — delete the stack when you're done to stop the cost.
+
+The canary writes artifacts to its S3 bucket, and CloudFormation can't delete a
+**non-empty** bucket, so empty it first, then delete the stack:
 
 ```sh
-sam delete
+# 1. find the canary artifact bucket name
+aws cloudformation describe-stack-resources --stack-name test-sam-deploy \
+  --query "StackResources[?ResourceType=='AWS::S3::Bucket'].PhysicalResourceId" --output text
+
+# 2. empty it
+aws s3 rm s3://<canary-artifact-bucket> --recursive
+
+# 3. delete the whole stack (canary, Lambda, DynamoDB, SNS, API, IAM role, bucket)
+sam delete --stack-name test-sam-deploy
+```
+
+Local build/venv artifacts (safe to remove any time):
+
+```sh
+chmod -R u+w .aws-sam 2>/dev/null; rm -rf .aws-sam   # SAM build output
+rm -rf .venv                                          # the virtualenv
 ```
 
 ## Observability
