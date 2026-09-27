@@ -189,7 +189,7 @@ empty-bucket:
 
 # Empty the bucket, then delete the whole stack
 teardown: empty-bucket
-    sam delete --stack-name {{stack}} --region {{region}}
+    sam delete --stack-name {{stack}} --region {{region}} --no-prompts
 
 # Remove local build/venv artifacts
 clean:
