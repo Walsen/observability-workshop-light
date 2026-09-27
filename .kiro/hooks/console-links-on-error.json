@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Console links on error",
+      "trigger": "PostToolUse",
+      "description": "After a shell command, if its output shows errors (HTTP 500, faults, or a break-* scenario), print the AWS observability console URLs for the stack.",
+      "matcher": "execute_bash",
+      "action": {
+        "type": "command",
+        "command": "input=$(cat); echo \"$input\" | grep -qiE 'HTTP 500|break-(table|exception|latency)|\"fault\"|AccessDenied|ResourceNotFound|\\\\[ERROR\\\\]' && { echo \"⚠️ Errors detected — observability consoles:\"; cd \"$(echo \"$input\" | sed -n 's/.*\"cwd\"[: ]*\"\\([^\"]*\\)\".*/\\1/p' | head -1)\" 2>/dev/null || true; just console-urls 2>/dev/null || echo \"(run 'just console-urls' for links; stack may not be deployed)\"; }; exit 0",
+        "timeout": 30
+      }
+    }
+  ]
+}

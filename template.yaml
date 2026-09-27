@@ -10,6 +10,21 @@ Parameters:
     Type: String
     Default: '100'
     Description: Minimum purchase Amount forwarded to SNS.
+  TableNameOverride:
+    Type: String
+    Default: ''
+    Description: >
+      Table name the function reads. Leave blank to use the real table.
+      Set to a non-existent name to demo a DynamoDB failure (X-Ray fault).
+  FailMode:
+    Type: String
+    Default: ''
+    AllowedValues: ['', 'exception']
+    Description: Set to 'exception' to make the function raise (500 fault) on every call.
+  InjectLatencySeconds:
+    Type: String
+    Default: '0'
+    Description: Seconds to sleep before work — injects latency / can force a timeout.
 
 Globals:
   Function:
@@ -17,6 +32,10 @@ Globals:
     Timeout: 15
     MemorySize: 128
     Tracing: Active          # X-Ray, matching patch_all() in the handler
+
+Conditions:
+  # True when TableNameOverride is set to a non-empty value (failure demo)
+  UseTableOverride: !Not [!Equals [!Ref TableNameOverride, '']]
 
 Resources:
   CustomerPurchaseTable:
@@ -47,6 +66,9 @@ Resources:
         Variables:
           SNS_TOPIC_ARN: !Ref PurchaseTopic
           PURCHASE_THRESHOLD: !Ref PurchaseThreshold
+          TABLE_NAME: !If [UseTableOverride, !Ref TableNameOverride, !Ref CustomerPurchaseTable]
+          FAIL_MODE: !Ref FailMode
+          INJECT_LATENCY_SECONDS: !Ref InjectLatencySeconds
       Policies:
         - DynamoDBReadPolicy:
             TableName: !Ref CustomerPurchaseTable

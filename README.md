@@ -197,6 +197,49 @@ questions, e.g.:
 - "Why is the endpoint probe failing?"
 - "Is the site up?"
 
+## Kiro skill: console links
+
+A third skill at `.kiro/skills/console-links/` prints direct AWS console URLs for
+the deployed stack — X-Ray trace map, X-Ray faults, the Synthetics canary, the
+Lambda log group, and the Lambda monitoring page. It wraps the `just console-urls`
+recipe, which resolves the real function name from the stack outputs so the links
+stay valid across redeploys. Ask e.g. "where do I see this in X-Ray?" or "give me
+the console links".
+
+An error-watching hook at `.kiro/hooks/console-links-on-error.json` runs after
+shell commands and, when it spots error signals in the output (HTTP 500, a
+`break-*` scenario, `AccessDenied`, `[ERROR]`, etc.), prints those console links
+automatically — so the links show up right when a failure appears.
+
+## Task runner (just)
+
+Common workflows are scripted in the `justfile` (run `just` to list them):
+
+| Recipe | What it does |
+|--------|--------------|
+| `just venv` / `just build` / `just deploy` / `just ship` | env setup, build, deploy |
+| `just url` / `just api-id` / `just outputs` | discovery (endpoint, api-id, stack outputs) |
+| `just console-urls` | print the observability console links |
+| `just seed` / `just seed-high` / `just count` | seed DynamoDB rows |
+| `just call` / `just load 20` / `just invoke` | exercise the endpoint, generate traffic |
+| `just canary-status` / `just logs` | quick observability checks |
+| `just teardown` / `just clean` | delete the stack / clean local artifacts |
+
+### Failure scenarios
+
+Injectable faults for the workshop — each redeploys the function with a toggle,
+then you drive traffic (`just load`) and watch it surface in X-Ray and the canary:
+
+| Recipe | Failure | Where it shows |
+|--------|---------|----------------|
+| `just break-table` | function reads a non-existent table (IAM denies the query) | X-Ray fault on the DynamoDB subsegment, 500s, red canary |
+| `just break-exception` | function raises on every call | clean 500 fault, red canary |
+| `just break-latency 20` | injects 20s sleep (> 15s timeout) | timeouts / high latency |
+| `just fix` | clears all toggles | back to green (canary recovers in a few minutes) |
+
+Typical loop: `just ship` → `just seed-high` → `just break-table` → `just load 10`
+→ ask Kiro "show me the traces" / "is the canary passing?" → `just fix`.
+
 ## Notes / gotchas
 
 - **`AWSTemplateFormatVersion`** must be spelled exactly — a typo passes `sam build`
